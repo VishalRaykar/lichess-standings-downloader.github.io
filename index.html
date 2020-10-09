@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="Lichess Standings Download, Direct Lichess Tournament Data Download">
+  <meta name="author" content="Saurabha Joglekar">
+
+  <title>Lichess Tournament Standings Downloader - Saurabha Joglekar</title>
+  <link rel="icon" href="favicon.png" sizes="32x32">
+  <link rel="icon" href="favicon.png" sizes="192x192">
+  <!-- Bootstrap core CSS -->
+  <link href="vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+
+</head>
+
+
+  <!-- Page Content -->
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-10 offset-lg-1 text-center">
+	  <br>
+		<img src = "saurabha design.png" width="40%">
+        <h2 class="mt-4">Lichess Tournament Standings Downloader</h2>
+		<br>
+		<p class="lead text-justify"> 
+			Hi, This is Saurabha Joglekar👋 a Chess Enthusiast, <a href="https://lichess.org/">Lichess.org</a> Believer and Chess Fanboy.
+			<br>
+			Recently, while organizing a SWISS Tournament on <a href="https://lichess.org/">Lichess.org</a>, it dawned me that we just can not download the standings table 🤦‍♂️ <br>
+			<br>Being the Techie that I am, I collaborated with my <b>fellow techie <a href="#">Vishal Raykar</a></b> (he developed most of it 😋) and made this task easy-pizy for all of us.
+			<br>All you have to do is, enter the <strong>URL of your Lichess Swiss Tournament</strong> and Click on the <strong>Download CSV</strong> button and then Magic.✨✨
+		</p>
+		<br>
+			<form class="col-lg-8 offset-lg-2 ">
+			  <div class="row justify-content-center">
+				<input type="text"  class="form-control form-control-lg col-lg-12" id="tournamentlink" value="https://lichess.org/swiss/vQgJZSZC">
+				<br>
+				<br>
+				<br>
+				<span class="input-group-btn">
+					<button type="button" class="btn btn-primary" onclick="DownloadCSV()">Download CSV</button>	
+				</span>					
+			  </div>
+			</form>
+        </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap core JavaScript -->
+  <script src="vendor/jquery/jquery.slim.min.js"></script>
+  <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+  
+  <script>
+		  
+	function scrapData(participantcount, urlmain) {
+		
+		alert(urlmain);
+		
+		var data = ['Name', 'Id', 'Rating', 'Points', 'TieBreak', 'Rank'];
+		var FinalData = [];
+		FinalData.push(data);
+		data = [];
+	
+		pagecount = Math.ceil(participantcount / 10);
+		for (var i = 1; i <= pagecount; i++) {
+			var getUrl = "https://lichess.org/swiss/" + urlmain + "/standing/" + i;
+			var temp = JSON.parse(httpGet(getUrl));
+			for (var j = 0; j < temp.players.length; j++) {
+				var temp2 = temp.players[j];
+				data.push(temp2.user.name);
+				data.push(temp2.user.id);
+				data.push(temp2.rating);
+				data.push(temp2.points);
+				data.push(temp2.tieBreak);
+				data.push(temp2.rank);
+				FinalData.push(data);
+				data = [];
+			}
+		}
+		//console.log(FinalData);
+		exportToCsv('Lichess-Standings[Saurabha.com].csv', FinalData);
+	}
+
+	function httpGet(theUrl) {
+		var xmlHttp = new XMLHttpRequest();
+		xmlHttp.open("GET", theUrl, false); // false for synchronous request
+		xmlHttp.send(null);
+		return xmlHttp.responseText;
+	}
+
+
+	function exportToCsv(filename, rows) {
+		var processRow = function(row) {
+			var finalVal = '';
+			for (var j = 0; j < row.length; j++) {
+				var innerValue = row[j] === null ? '' : row[j].toString();
+				if (row[j] instanceof Date) {
+					innerValue = row[j].toLocaleString();
+				};
+				var result = innerValue.replace(/"/g, '""');
+				if (result.search(/("|,|\n)/g) >= 0)
+					result = '"' + result + '"';
+				if (j > 0)
+					finalVal += ',';
+				finalVal += result;
+			}
+			return finalVal + '\n';
+		};
+
+		var csvFile = '';
+		for (var i = 0; i < rows.length; i++) {
+			csvFile += processRow(rows[i]);
+		}
+
+		var blob = new Blob([csvFile], {
+			type: 'text/csv;charset=utf-8;'
+		});
+		if (navigator.msSaveBlob) { // IE 10+
+			navigator.msSaveBlob(blob, filename);
+		} else {
+			var link = document.createElement("a");
+			if (link.download !== undefined) { // feature detection
+				// Browsers that support HTML5 download attribute
+				var url = URL.createObjectURL(blob);
+				link.setAttribute("href", url);
+				link.setAttribute("download", filename);
+				link.style.visibility = 'hidden';
+				document.body.appendChild(link);
+				link.click();
+				document.body.removeChild(link);
+			}
+		}
+	}
+
+
+
+	function DownloadCSV() {
+		var url = document.getElementById("tournamentlink").value;
+		var urlmain = url.split("/");
+		if(urlmain[0] == "http" || urlmain[0] == "https" || urlmain[0] == "https:" || urlmain[0] == "http:" )
+		{
+			scrapData(26, urlmain[4]);
+		}
+		else
+		{
+			alert("Issue in URL. URL must start with https://");
+		}
+	}
+	  
+</script>
+
+</body>
+
+</html>
